@@ -36,7 +36,7 @@ namespace _JoykadeGames.Editor
             VisualElement propertyContainer = new VisualElement();
             propertyContainer.AddToClassList("container");
             SerializedProperty myProp = serializedObject.FindProperty("m_SavePosition");
-            SerializedProperty rotProp = serializedObject.FindProperty("m_SavePosition");
+            SerializedProperty rotProp = serializedObject.FindProperty("m_SaveRotation");
             PropertyField myField = new PropertyField(myProp);
             PropertyField rotationField = new PropertyField(rotProp);
             myField.Bind(serializedObject);
