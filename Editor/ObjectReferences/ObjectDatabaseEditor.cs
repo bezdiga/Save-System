@@ -54,7 +54,7 @@ namespace _JoykadeGames.Editor
         {
             VisualElement rootVisual = new VisualElement();
 
-            var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Packages/com.hatchstudio.save/Editor/Utilities/Styles/EditorStyle.uss");
+            var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Packages/com.hatchstudio.save-system/Editor/Utilities/Styles/EditorStyle.uss");
             
             rootVisual.styleSheets.Add(styleSheet);
             

@@ -42,8 +42,8 @@ namespace _JoykadeGames.Editor
         {
             var root = rootVisualElement;
 
-            var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Packages/com.hatchstudio.save//Editor/ObjectReferences/Style/TableStyle.uss");
-            var styleSheetEditor = AssetDatabase.LoadAssetAtPath<StyleSheet>("Packages/com.hatchstudio.save/Editor/Utilities/Styles/EditorStyle.uss");
+            var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Packages/com.hatchstudio.save-system//Editor/ObjectReferences/Style/TableStyle.uss");
+            var styleSheetEditor = AssetDatabase.LoadAssetAtPath<StyleSheet>("Packages/com.hatchstudio.save-system/Editor/Utilities/Styles/EditorStyle.uss");
             rootVisualElement.styleSheets.Add(styleSheet);
             rootVisualElement.styleSheets.Add(styleSheetEditor);
 
