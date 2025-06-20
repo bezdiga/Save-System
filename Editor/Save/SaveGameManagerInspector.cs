@@ -21,7 +21,7 @@ namespace _JoykadeGames.Editor
 
         public override VisualElement CreateInspectorGUI()
         {
-            var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Packages/com.hatchstudio.save/Editor/Utilities/Styles/EditorStyle.uss");
+            var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Packages/com.hatchstudio.save-system/Editor/Utilities/Styles/EditorStyle.uss");
             VisualElement root = new VisualElement();
             root.styleSheets.Add(styleSheet);
             var container = CreateContainer();
