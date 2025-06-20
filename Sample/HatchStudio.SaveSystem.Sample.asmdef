@@ -1,0 +1,16 @@
+{
+    "name": "HatchStudio.SaveSystem.Sample",
+    "rootNamespace": "",
+    "references": [
+        "GUID:1f9f52c6b813a0947ad869fc5a56a34c"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

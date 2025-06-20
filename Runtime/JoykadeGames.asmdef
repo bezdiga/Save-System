@@ -1,0 +1,16 @@
+{
+    "name": "JoykadeGames.Save",
+    "rootNamespace": "",
+    "references": [
+        "GUID:8dc157d98a096964d8724568c7191bf1"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

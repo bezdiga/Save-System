@@ -1,0 +1,35 @@
+
+.label-header{
+    font-size: 12px;
+    font-weight: bold;
+    -unity-font-style: bold;
+    text-align: middle-left;
+    padding: 5px 10px;
+    background-color: #272727;
+    border-radius: 5px;
+}
+.container{
+    height: auto;
+    width: 100%;
+    border-color: black;
+    border-width: 1px;
+    padding: 5px 5px;
+    background-color: #393939;
+    box-sizing: border-box;
+}
+
+.dragArea{
+    height: auto;
+    width: 100%;
+    border-color: black;
+    border-width: 1px;
+    margin: 5px 5px;
+    background-color: #393939;
+    box-sizing: border-box;
+}
+.icon-label-container {
+    display: flex;
+    flex-direction: row;        
+    align-items: flex-start;    
+    padding: 5px;           
+}
