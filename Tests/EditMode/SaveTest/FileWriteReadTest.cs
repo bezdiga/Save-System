@@ -27,10 +27,10 @@ namespace _JoykadeGames.Tests.EditMode.Save
         [SetUp]
         public void SetUp()
         {
-            GetSavedFolder(out string saveFolderName, 0);
+            /*GetSavedFolder(out string saveFolderName, 0);
             string saveFolderPath = Path.Combine(SavedGamePath, saveFolderName);
-            Directory.CreateDirectory(saveFolderPath);
-            _writeRead = new FileWriteRead(saveFolderPath);
+            Directory.CreateDirectory(saveFolderPath);*/
+            _writeRead = new FileWriteRead(SerializationUtillity.SerializationAsset);
         }
 
         [TearDown]
@@ -46,7 +46,7 @@ namespace _JoykadeGames.Tests.EditMode.Save
         public void SerializeData_WritesToFileCorrectly()
         {
             // Arrange
-            string saveInfoFileName = _serializationAsset.SaveInfoName + _serializationAsset.SaveExtention;
+            string saveInfoFileName = _serializationAsset.SaveInfoName + _serializationAsset.SaveExtension;
             SaveDataToFile(saveInfoFileName, out StorableCollection saveBuffer);
 
             //Act
@@ -62,7 +62,7 @@ namespace _JoykadeGames.Tests.EditMode.Save
         public void LoadData_DeserializeCorrectly()
         {
             // Arrange
-            string saveInfoFileName = _serializationAsset.SaveInfoName + _serializationAsset.SaveExtention;
+            string saveInfoFileName = _serializationAsset.SaveInfoName + _serializationAsset.SaveExtension;
             SaveDataToFile(saveInfoFileName, out StorableCollection saveBuffer);
 
             //Act

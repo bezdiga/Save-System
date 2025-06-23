@@ -54,5 +54,17 @@ namespace _JoykadeGames.Runtime.SaveSystem
             SaveablePairs = pairs;
         }
     }
+    
+    public struct SavedGameInfo
+    {
+        public string Id;
+        public string Scene;
+        public DateTime TimeSaved;
+        public TimeSpan TimePlayed;
+        public bool IsAutosave;
+        public string Foldername;
+        public string Dataname;
+        public Texture2D Thumbnail;
+    }
    
 }

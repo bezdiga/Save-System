@@ -10,22 +10,32 @@ using UnityEngine.SceneManagement;
 
 namespace _JoykadeGames.Runtime.SaveSystem
 {
+    [DefaultExecutionOrder(-10000)]
     public class SaveGameManager : Singleton<SaveGameManager>
     {
         public static string TOKEN_SEPARATOR = "-";
         private byte[] GameData;
-        private SerializationAsset _serializationAsset => SerializationUtillity.SerializationAsset;
+        private static SerializationAsset _serializationAsset => SerializationUtillity.SerializationAsset;
         private ObjectDataBase _OnjectReference => SerializationUtillity.SerializationObjectDatabase;
         public List<SaveablePair> worldSaveables = new();
         public List<RuntimeSaveable> runtimeSaveables = new();
-        private FileWriteRead _writeRead;
-
+        
+        private static StorableCollection _worldStateBuffer;
+        public static FileWriteRead WriteRead => _writeRead ??= new FileWriteRead(SerializationUtillity.SerializationAsset);
+        private static FileWriteRead _writeRead;
+        private string currentScene;
+        public static string LoadSceneName;
+        public static string LoadFolderName;
+        
+        /// <summary>
+        /// Shortcut to Level Manager Scene/Scene Loader
+        /// </summary>
+        public static string LMS => _serializationAsset.LevelManagerScene;
+        
         private void Awake()
         {
-            GetSavedFolder(out string saveFolderName, 0);
-            string saveFolderPath = Path.Combine(SavedGamePath, saveFolderName);
-            _writeRead = new FileWriteRead(saveFolderPath);
-            LoadInfo();
+            currentScene = SceneManager.GetActiveScene().name;
+            LoadSaveable(_worldStateBuffer);
         }
 
         private string SavedGamePath
@@ -42,33 +52,58 @@ namespace _JoykadeGames.Runtime.SaveSystem
 
         #region Save/Load
         
-        public static void SaveTest()
+        public static void SaveGame()
         {
-            Instance.PrepareAndSaveGame(0);
+            Instance.PrepareAndSaveGame();
         }
 
-        public static void LoadInfo()
+        /// <summary>
+        /// Set the load type to load the game state.
+        /// <br>The game state and player data will be loaded from a saved game.</br>
+        /// </summary>
+        /// <param name="sceneName">The name of the scene to be loaded.</param>
+        /// <param name="folderName">The name of the saved game folder.</param>
+        public static void SetLoadGameState(string sceneName, string folderName)
         {
-            
-            Instance.LoadGameState();
+            LoadSceneName = sceneName;
+            LoadFolderName = folderName;
         }
+        
 
-
-        private void LoadGameState()
+        /// <summary>
+        /// Try to Deserialize and Validate Game State
+        /// </summary>
+        public static void TryDeserializeGameStateAsync(string folderName)
         {
-            string saveDataFileName = _serializationAsset.SaveDataName + _serializationAsset.SaveExtention;
-            
-            StorableCollection worldData = _writeRead.LoadFromSaveFile(saveDataFileName);
-            if (worldData == null)
+            // get saves path
+            string savesPath = _serializationAsset.GetSavesPath();
+            string saveFolderPath = Path.Combine(savesPath, folderName);
+
+            // check if directory exists
+            if (!Directory.Exists(saveFolderPath))
             {
-                SaveTest();
-                Debug.LogError("Create New Game");
-                LoadGameState();
+                Debug.LogError("Save folder does not exist: " + saveFolderPath);
                 return;
             }
-            if(worldData.ContainsKey("worldState"))
-                LoadSaveable(worldData["worldState"] as StorableCollection);
+
+            // deserialize saved game info
+            string filePath = Path.Combine(saveFolderPath, _serializationAsset.SaveDataName + _serializationAsset.SaveExtension);
+            StorableCollection worldData = WriteRead.LoadFromSaveFile(filePath);
+            if (worldData != null)
+            {
+                if (worldData.ContainsKey("worldState"))
+                    _worldStateBuffer = (worldData["worldState"] as StorableCollection);
+            }
         }
+        
+        /// <summary>
+        /// Remove all saved games.
+        /// </summary>
+        public static async Task RemoveAllSaves()
+        {
+            await WriteRead.RemoveAllSaves();
+        }
+        
         private void LoadSaveable(StorableCollection worldData)
         {
             bool isTokenError = false;
@@ -126,17 +161,18 @@ namespace _JoykadeGames.Runtime.SaveSystem
                 }
             }
         }
-        private async void PrepareAndSaveGame(int savedId)
+        private async void PrepareAndSaveGame()
         {
-            GetSavedFolder(out string saveFolderName, savedId);
+            GetSavedFolder(out string saveFolderName);
             string saveFolderPath = Path.Combine(SavedGamePath, saveFolderName);
             if (!Directory.Exists(saveFolderPath))
                 Directory.CreateDirectory(saveFolderPath);
             
+            string saveId = UniqueID.GetUniqueGuid();
             StorableCollection saveInfoData = new()
             {
-                { "id", savedId },
-                { "scene", SceneManager.GetActiveScene().name },
+                { "id", saveId },
+                { "scene", currentScene },
                 { "dateTime", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") },
                 { "timePlayed", 0 },
                 { "data", "" },
@@ -144,42 +180,43 @@ namespace _JoykadeGames.Runtime.SaveSystem
             };
             StorableCollection saveablesBuffer = new()
             {
-                { "id", savedId },
+                { "id", saveId },
                 { "worldState", GetWorldStateBuffer() }
             };
-            await SerializeGameState(saveInfoData, saveablesBuffer, saveFolderName, saveFolderPath);
+            await SerializeGameState(saveInfoData, saveablesBuffer, saveFolderPath);
         }
 
-        private async Task SerializeGameState(StorableCollection saveInfo, StorableCollection saveBuffer,
-            string folderName, string folderPath)
+        private async Task SerializeGameState(StorableCollection saveInfo, StorableCollection saveBuffer, string folderPath)
         {
-            string saveInfoFileName = _serializationAsset.SaveInfoName + _serializationAsset.SaveExtention;
-            string saveDataFileName = _serializationAsset.SaveDataName + _serializationAsset.SaveExtention;
+            string saveInfoFileName = _serializationAsset.SaveInfoName + _serializationAsset.SaveExtension;
+            string saveDataFileName = _serializationAsset.SaveDataName + _serializationAsset.SaveExtension;
 
             saveInfo["data"] = saveDataFileName;
             
             // serialize save info to file
             string saveInfoPath = Path.Combine(folderPath, saveInfoFileName);
-            _writeRead.SerializeData(saveInfo, saveInfoPath);
+            WriteRead.SerializeData(saveInfo, saveInfoPath);
 
             // serialize save data to file
             string saveDataPath = Path.Combine(folderPath, saveDataFileName);
-            _writeRead.SerializeData(saveBuffer, saveDataPath);
+            WriteRead.SerializeData(saveBuffer, saveDataPath);
         }
         
-        private void GetSavedFolder(out string saveFolderName, int savedId)
+        private void GetSavedFolder(out string saveFolderName)
         {
-            if(_serializationAsset == null) Debug.LogError("Is Null");
+            if(_serializationAsset == null) Debug.LogError("Not found Serialization Asset, please assign it in the inspector!");
+            
             saveFolderName = _serializationAsset.SaveFolderPrefix;
 
             if (!_serializationAsset.SingleSave)
             {
                 string[] directories = Directory.GetDirectories(SavedGamePath, $"{saveFolderName}*");
-                saveFolderName += (directories.Length - 1).ToString("D3");
+                saveFolderName += directories.Length.ToString("D3");//saveFolderName += (directories.Length - 1).ToString("D3");
             }
-            else
+            // if single save and use of scene names is enabled, the scene name is used as the save name
+            else if (_serializationAsset.UseSceneNames)
             {
-                saveFolderName += savedId.ToString("D3");
+                saveFolderName += currentScene.Replace(" ", "");
             }
         }
         private StorableCollection GetWorldStateBuffer()
@@ -244,7 +281,7 @@ namespace _JoykadeGames.Runtime.SaveSystem
             else
                 Debug.LogWarning("Saveable is already registered!", saveable);
 #else
-            Instance.m_CurrentSceneSaveables.Add(runtimeSaveable);
+            Instance.runtimeSaveables.Add(runtimeSaveable);
 #endif
         }
         

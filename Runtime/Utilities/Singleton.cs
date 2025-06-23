@@ -9,7 +9,7 @@ public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
     /// <summary>
     /// The singleton instance of a reference.
     /// </summary>
-    public static T Instance
+    protected static T Instance
     {
         get
         {

@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using _JoykadeGames.Code.Runtime.Scriptables;
 using UnityEngine;
-
+using UnityEngine.SceneManagement;
 using Random = UnityEngine.Random;
 
 namespace _JoykadeGames.Runtime.SaveSystem.PerformanceTest
@@ -82,7 +82,7 @@ namespace _JoykadeGames.Runtime.SaveSystem.PerformanceTest
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-            SaveGameManager.SaveTest();
+            SaveGameManager.SaveGame();
             stopwatch.Stop();
             UnityEngine.Debug.Log("Save Time: " + stopwatch.ElapsedMilliseconds + " ms");
         }
@@ -91,7 +91,7 @@ namespace _JoykadeGames.Runtime.SaveSystem.PerformanceTest
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-            SaveGameManager.LoadInfo();
+            SaveGameManager.SetLoadGameState(SceneManager.GetActiveScene().name,"");
             stopwatch.Stop();
             UnityEngine.Debug.Log("Load Time: " + stopwatch.ElapsedMilliseconds + " ms");
         }

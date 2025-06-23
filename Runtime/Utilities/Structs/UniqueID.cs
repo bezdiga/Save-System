@@ -61,5 +61,10 @@ namespace _JoykadeGames
             }
         }
         
+        /// <summary>
+        /// Create new unique Guid.
+        /// </summary>
+        public static string GetUniqueGuid() => System.Guid.NewGuid().ToString("N");
+        
     }
 }

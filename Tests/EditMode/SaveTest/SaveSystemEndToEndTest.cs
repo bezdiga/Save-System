@@ -26,10 +26,10 @@ namespace _JoykadeGames.Tests.EditMode.Save
         [SetUp]
         public void SetUp()
         {
-            GetSavedFolder(out string saveFolderName, 0);
+            /*GetSavedFolder(out string saveFolderName, 0);
             string saveFolderPath = Path.Combine(SavedGamePath, saveFolderName);
-            Directory.CreateDirectory(saveFolderPath);
-            _writeRead = new FileWriteRead(saveFolderPath);
+            Directory.CreateDirectory(saveFolderPath);*/
+            _writeRead = new FileWriteRead(SerializationUtillity.SerializationAsset);
             _savable = new MockSavable(0, 0);
         }
 
@@ -46,7 +46,7 @@ namespace _JoykadeGames.Tests.EditMode.Save
         [TestCase(4,101.1f)]
         public void SaveSystem_EndToEnd(int level, float experience)
         {
-            string saveInfoFileName = _serializationAsset.SaveInfoName + _serializationAsset.SaveExtention;
+            string saveInfoFileName = _serializationAsset.SaveInfoName + _serializationAsset.SaveExtension;
             _savable.level = level;
             _savable.Experience = experience;
             
