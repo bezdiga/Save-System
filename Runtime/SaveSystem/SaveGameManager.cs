@@ -35,7 +35,8 @@ namespace _JoykadeGames.Runtime.SaveSystem
         private void Awake()
         {
             currentScene = SceneManager.GetActiveScene().name;
-            LoadSaveable(_worldStateBuffer);
+            if(_worldStateBuffer != null)
+                LoadSaveable(_worldStateBuffer);
         }
 
         private string SavedGamePath
