@@ -10,7 +10,7 @@ using UnityEngine.SceneManagement;
 
 namespace _JoykadeGames.Runtime.SaveSystem
 {
-    [DefaultExecutionOrder(-10000)]
+    [DefaultExecutionOrder(-100000)]
     public class SaveGameManager : Singleton<SaveGameManager>
     {
         public static string TOKEN_SEPARATOR = "-";
