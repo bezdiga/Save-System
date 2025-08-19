@@ -1,6 +1,9 @@
-﻿namespace _JoykadeGames.Runtime.SaveSystem
+﻿using UnityEngine;
+using VContainer.Unity;
+
+namespace _JoykadeGames.Runtime.SaveSystem
 {
-    public abstract class PlatformInitializer
+    public abstract class PlatformInitializer : IStartable
     {
         public IWriterReader Storage { get; protected set; }
         public IUserProfile CurrentUser { get; protected set; }
@@ -10,13 +13,12 @@
         /// Metoda șablon. Definește ordinea operațiunilor de inițializare.
         /// Aceasta este singura metodă pe care o va apela codul de start al jocului.
         /// </summary>
-        public void Initialize()
+        private void Initialize()
         {
             InitializeCoreServices();
             InitializeUser();
             InitializeSave();
             InitializeTrophies();
-        
         }
         
         /// <summary>
@@ -38,5 +40,10 @@
         /// Inițializează sistemul de trofee/achievements, dacă există.
         /// </summary>
         protected virtual void InitializeTrophies(){}
+
+        public void Start()
+        {
+            Initialize();
+        }
     }
 }

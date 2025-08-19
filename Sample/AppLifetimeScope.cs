@@ -13,12 +13,24 @@ namespace Sample
             base.Configure(builder);
             var initializer = PlatformInitializerFactory.Create();
 
-            initializer.Initialize();
             
-            builder.RegisterInstance(initializer).As<PlatformInitializer>();
-            builder.RegisterInstance(initializer.Storage).As<IWriterReader>();
-            builder.RegisterInstance(initializer.CurrentUser).As<IUserProfile>();
+            builder.RegisterInstance(initializer).As<PlatformInitializer,IStartable>();
+            /*builder.RegisterInstance(initializer.Storage).As<IWriterReader>();
+            builder.RegisterInstance(initializer.CurrentUser).As<IUserProfile>();*/
             
+            builder.Register(resolver =>
+            {
+                var platformInitializer = resolver.Resolve<PlatformInitializer>();
+                return platformInitializer.Storage;
+            }, Lifetime.Singleton).As<IWriterReader>();
+
+            
+            builder.Register(resolver =>
+            {
+                var platformInitializer = resolver.Resolve<PlatformInitializer>();
+                return platformInitializer.CurrentUser;
+
+            }, Lifetime.Singleton).As<IUserProfile>();
             /*builder.Register(resolver =>
             {
                 return PlatformInitializerFactory.Create();
