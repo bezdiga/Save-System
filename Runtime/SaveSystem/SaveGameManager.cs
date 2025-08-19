@@ -1,12 +1,11 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using _JoykadeGames.Code.Runtime.Scriptables;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using VContainer;
 
 namespace _JoykadeGames.Runtime.SaveSystem
 {
@@ -15,14 +14,14 @@ namespace _JoykadeGames.Runtime.SaveSystem
     {
         public static string TOKEN_SEPARATOR = "-";
         private byte[] GameData;
-        private static SerializationAsset _serializationAsset => SerializationUtillity.SerializationAsset;
+        internal static SerializationAsset _serializationAsset => SerializationUtillity.SerializationAsset;
         private ObjectDataBase _OnjectReference => SerializationUtillity.SerializationObjectDatabase;
         public List<SaveablePair> worldSaveables = new();
         public List<RuntimeSaveable> runtimeSaveables = new();
         
-        private static StorableCollection _worldStateBuffer;
-        public static FileWriteRead WriteRead => _writeRead ??= new FileWriteRead(SerializationUtillity.SerializationAsset);
-        private static FileWriteRead _writeRead;
+        internal static StorableCollection _worldStateBuffer;
+        //protected static IWriterReader WriteRead => Instance._writeRead;
+        private IWriterReader _writeRead;
         private string currentScene;
         public static string LoadSceneName;
         public static string LoadFolderName;
@@ -32,6 +31,12 @@ namespace _JoykadeGames.Runtime.SaveSystem
         /// </summary>
         public static string LMS => _serializationAsset.LevelManagerScene;
         
+        [Inject]
+        public void Construct(IWriterReader writeRead)
+        {
+            _writeRead = writeRead;
+            Debug.LogError("Successfully injected SaveGameManager with IWriterReader");
+        }
         private void Awake()
         {
             currentScene = SceneManager.GetActiveScene().name;
@@ -71,7 +76,7 @@ namespace _JoykadeGames.Runtime.SaveSystem
         }
         
 
-        /// <summary>
+        /*/// <summary>
         /// Try to Deserialize and Validate Game State
         /// </summary>
         public static void TryDeserializeGameStateAsync(string folderName)
@@ -95,15 +100,15 @@ namespace _JoykadeGames.Runtime.SaveSystem
                 if (worldData.ContainsKey("worldState"))
                     _worldStateBuffer = (worldData["worldState"] as StorableCollection);
             }
-        }
+        }*/
         
         /// <summary>
         /// Remove all saved games.
         /// </summary>
-        public static async Task RemoveAllSaves()
+        /*public static async Task RemoveAllSaves()
         {
             await WriteRead.RemoveAllSaves();
-        }
+        }*/
         
         private void LoadSaveable(StorableCollection worldData)
         {
@@ -196,11 +201,11 @@ namespace _JoykadeGames.Runtime.SaveSystem
             
             // serialize save info to file
             string saveInfoPath = Path.Combine(folderPath, saveInfoFileName);
-            WriteRead.SerializeData(saveInfo, saveInfoPath);
+            _writeRead.SerializeData(saveInfo, saveInfoPath);
 
             // serialize save data to file
             string saveDataPath = Path.Combine(folderPath, saveDataFileName);
-            WriteRead.SerializeData(saveBuffer, saveDataPath);
+            _writeRead.SerializeData(saveBuffer, saveDataPath);
         }
         
         private void GetSavedFolder(out string saveFolderName)
@@ -291,7 +296,7 @@ namespace _JoykadeGames.Runtime.SaveSystem
 #if UNITY_EDITOR
             if (!Application.isPlaying)
                 return;
-
+            
             if (Instance.runtimeSaveables.Exists(x => x.InstantiatedObject.GetGuid() == saveable.GetGuid()))
             {
                 Instance.runtimeSaveables.RemoveAll(x => x.InstantiatedObject.GetGuid() == saveable.GetGuid());
@@ -303,6 +308,7 @@ namespace _JoykadeGames.Runtime.SaveSystem
         }
 
         #endregion
+        
     }
     
 }

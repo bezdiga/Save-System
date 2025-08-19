@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
+using VContainer;
 using static _JoykadeGames.Runtime.SaveSystem.SaveGameManager;
 
 namespace _JoykadeGames.Runtime.SaveSystem
@@ -13,6 +14,13 @@ namespace _JoykadeGames.Runtime.SaveSystem
         public UnityEvent<float> OnProgressUpdate;
         public UnityEvent OnLoadingDone;
         
+        private IWriterReader _writerReader;
+        
+        [Inject]
+        public void Construct(IWriterReader wr)
+        {
+            _writerReader = wr;
+        }
         private void Start()
         {
             Time.timeScale = 1f;
@@ -54,7 +62,7 @@ namespace _JoykadeGames.Runtime.SaveSystem
             {
                 if (Debugging) Debug.Log($"[LevelManager] Trying to deserialize a save with the name '{saveFolder}'.");
                 {
-                    TryDeserializeGameStateAsync(saveFolder);
+                    _writerReader.TryDeserializeGameStateAsync(saveFolder);
                     yield return new WaitForEndOfFrame();
                 }
                 if (Debugging) Debug.Log($"[LevelManager] The save was successfully deserialized. ");

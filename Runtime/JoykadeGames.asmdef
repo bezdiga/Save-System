@@ -2,7 +2,9 @@
     "name": "JoykadeGames.Save",
     "rootNamespace": "",
     "references": [
-        "GUID:8dc157d98a096964d8724568c7191bf1"
+        "GUID:8dc157d98a096964d8724568c7191bf1",
+        "GUID:b0214a6008ed146ff8f122a6a9c2f6cc",
+        "GUID:285e1e0ae6e221a499092df70a1fae3d"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

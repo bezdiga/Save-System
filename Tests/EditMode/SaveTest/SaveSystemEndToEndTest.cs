@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using _JoykadeGames.Runtime.SaveSystem;
+using _JoykadeGames.Runtime.SaveSystem.Standlone;
 using NUnit.Framework;
 
 namespace _JoykadeGames.Tests.EditMode.Save
@@ -29,7 +30,7 @@ namespace _JoykadeGames.Tests.EditMode.Save
             /*GetSavedFolder(out string saveFolderName, 0);
             string saveFolderPath = Path.Combine(SavedGamePath, saveFolderName);
             Directory.CreateDirectory(saveFolderPath);*/
-            _writeRead = new FileWriteRead(SerializationUtillity.SerializationAsset);
+            _writeRead = new FileWriteRead(new StandaloneParams(SerializationUtillity.SerializationAsset));
             _savable = new MockSavable(0, 0);
         }
 

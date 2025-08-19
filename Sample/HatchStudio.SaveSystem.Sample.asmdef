@@ -2,7 +2,9 @@
     "name": "HatchStudio.SaveSystem.Sample",
     "rootNamespace": "",
     "references": [
-        "GUID:1f9f52c6b813a0947ad869fc5a56a34c"
+        "GUID:1f9f52c6b813a0947ad869fc5a56a34c",
+        "GUID:b0214a6008ed146ff8f122a6a9c2f6cc",
+        "GUID:75469ad4d38634e559750d17036d5f7c"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

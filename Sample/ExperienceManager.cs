@@ -2,6 +2,8 @@ using System;
 using _JoykadeGames.Runtime.SaveSystem;
 
 using UnityEngine;
+using UnityEngine.InputSystem;
+
 public class ExperienceManager : MonoBehaviour,ISaveable
 {
     public int level;
@@ -34,6 +36,23 @@ public class ExperienceManager : MonoBehaviour,ISaveable
         if(GUI.Button(new Rect(x + 255, y +150, 250, 80), "Save",buttonStyle))
         {
             SaveGameManager.SaveGame();
+        }
+    }
+
+    private void Update()
+    {
+        if (Gamepad.current != null) 
+        {
+            if (Gamepad.current.dpad.up.wasPressedThisFrame)
+            {
+                GainExperience(10);
+            }
+            
+            if(Gamepad.current.buttonSouth.wasPressedThisFrame)
+            {
+                SaveGameManager.SaveGame();
+                Debug.LogError("Save GAme");
+            }
         }
     }
 

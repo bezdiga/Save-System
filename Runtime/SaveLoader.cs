@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using VContainer;
 
 namespace _JoykadeGames.Runtime.SaveSystem
 {
@@ -17,12 +18,27 @@ namespace _JoykadeGames.Runtime.SaveSystem
         
         private SavedGameInfo? lastSave;
         
+        private IWriterReader _writerReader;
+        
         private bool isLoading;
         [Header("Events")]
         public UnityEvent OnSavesBeingLoaded;
         public UnityEvent OnSavesLoaded;
         public UnityEvent OnSavesEmpty;
-        
+
+        [Inject]
+        public void Construct(IWriterReader wr,IUserProfile userProfile)
+        {
+            _writerReader = wr;
+            Debug.LogError("Injection Successful");
+            Debug.LogError("Reader: " + wr.GetType().Name);
+            if(userProfile == null)
+            {
+                Debug.LogError("UserProfile is null");
+                return;
+            }
+            Debug.LogError("Profile: " + userProfile.GetType().Name);
+        }
         private async void Start()
         {
             if (LoadAtStart)
@@ -61,14 +77,14 @@ namespace _JoykadeGames.Runtime.SaveSystem
         void LoadNewGame()
         {
             if(NewGameRemoveSaves) 
-                SaveGameManager.RemoveAllSaves();
+                _writerReader.RemoveAllSaves();
             SaveGameManager.LoadSceneName = NewGameSceneName;
             SceneManager.LoadScene(SaveGameManager.LMS);
         }
         private async Task LoadAllSaves()
         {
             // load saves in another thread
-            var savedGames = await SaveGameManager.WriteRead.ReadAllSaves();
+            var savedGames = await _writerReader.ReadAllSaves();
 
             foreach (var saved in savedGames)
             {
