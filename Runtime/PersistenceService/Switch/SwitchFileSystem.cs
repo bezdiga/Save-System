@@ -3,16 +3,19 @@ using nn;
 using nn.fs;
 using UnityEngine;
 using File = nn.fs.File;
-
+using static _JoykadeGames.Runtime.SaveSystem.Nitendo.SwitchFsErrorHandler;
 
 namespace _JoykadeGames.Runtime.SaveSystem.Nitendo
 {
     public class SwitchFileSystem : IFileSystemProvider
     {
-        private FileHandle fileHandle;
         private readonly string mountName = "save";
 
-        
+
+        public SwitchFileSystem(string mountName)
+        {
+            this.mountName = mountName;
+        }
         private string GetFullPath(string relativePath)
         {
             return $"{mountName}:/{relativePath}";
@@ -22,21 +25,23 @@ namespace _JoykadeGames.Runtime.SaveSystem.Nitendo
         public bool Exists(string path)
         {
             EntryType entryType = 0;
-            Result result = FileSystem.GetEntryType(ref entryType, path);
+            string fullPath = GetFullPath(path);
+            Result result = FileSystem.GetEntryType(ref entryType, fullPath);
+            
             
             if (result.IsSuccess())
             {
                 return entryType == EntryType.File;
             }
 
-            // Dacă eroarea este specific "PathNotFound", atunci nu există. E un caz normal.
+            
             if (FileSystem.ResultPathNotFound.Includes(result))
             {
                 return false;
             }
 
             // Orice altă eroare este una gravă.
-            //result.abortUnlessSuccess();
+            result.abortUnlessSuccess();
             return false;
         }
 
@@ -44,47 +49,34 @@ namespace _JoykadeGames.Runtime.SaveSystem.Nitendo
         {
             string fullPath = GetFullPath(path);
             long size = data.LongLength;
-
+            Debug.LogError("Trying to write file: " + fullPath + " with size: " + size);
             // Blochează notificările de sistem pe durata operațiunilor I/O critice
             UnityEngine.Switch.Notification.EnterExitRequestHandlingSection();
 
-            // Pe Switch, Create șterge și recreează fișierul, perfect pentru suprascriere.
-            Result result = File.Create(fullPath, size);
-            if (!result.IsSuccess())
+            using (var writer = new WriteContext(mountName))
             {
-                Debug.LogError($"Switch WriteFile failed at Create step: {result}");
-                UnityEngine.Switch.Notification.LeaveExitRequestHandlingSection();
-                return false;
-            }
-
-            result = File.Open(ref fileHandle, fullPath, OpenFileMode.Write);
-            if (!result.IsSuccess())
-            {
-                Debug.LogError($"Switch WriteFile failed at Open step: {result}");
-                UnityEngine.Switch.Notification.LeaveExitRequestHandlingSection();
-                return false;
-            }
-
-            result = File.Write(fileHandle, 0, data, size, WriteOption.Flush);
-            File.Close(fileHandle); 
-
-            if (!result.IsSuccess())
-            {
-                Debug.LogError($"Switch WriteFile failed at Write step: {result}");
-                UnityEngine.Switch.Notification.LeaveExitRequestHandlingSection();
-                return false;
+                nn.Result result;
+                
+                result = nn.fs.File.Open(ref writer.handle, fullPath, nn.fs.OpenFileMode.Write);
+                
+                if (!Check(result, out FileSystemErrorType error))
+                {
+                    if (error == FileSystemErrorType.PathNotFound)
+                    {
+                        result = nn.fs.File.Create(fullPath, data.LongLength);
+                        Debug.LogError("Create new file: " + fullPath + " with size: " + data.LongLength);
+                        if (!Check(result, out _)) return false;
+                    }
+                    result = nn.fs.File.Open(ref writer.handle, fullPath, nn.fs.OpenFileMode.Write);
+                    if (!Check(result, out _)) return false;
+                }
+                
+                result = nn.fs.File.SetSize(writer.handle, data.LongLength);
+            
+                result = nn.fs.File.Write(writer.handle, 0, data, data.LongLength, nn.fs.WriteOption.Flush);
+                result.abortUnlessSuccess();
             }
             
-            result = FileSystem.Commit(mountName);
-            
-            UnityEngine.Switch.Notification.LeaveExitRequestHandlingSection();
-        
-            if (!result.IsSuccess())
-            {
-                Debug.LogError($"Switch WriteFile failed at Commit step: {result}");
-                return false;
-            }
-
             return true;
         }
 
@@ -93,29 +85,28 @@ namespace _JoykadeGames.Runtime.SaveSystem.Nitendo
             data = null;
             string fullPath = GetFullPath(path);
 
+            Debug.LogError("Trying to read file: " + fullPath);
             if (!Exists(path)) return false;
 
-            Result result = File.Open(ref fileHandle, fullPath, OpenFileMode.Read);
-            if (!result.IsSuccess())
-            {
-                Debug.LogError($"Switch ReadFile failed at Open step: {result}");
-                return false;
-            }
-
+            nn.fs.FileHandle handle = new nn.fs.FileHandle();
+            Result result = File.Open(ref handle, fullPath, OpenFileMode.Read);
+            
+            if (!Check(result,out _)) return false;
+            
             long fileSize = 0;
-            result = File.GetSize(ref fileSize, fileHandle);
+            result = File.GetSize(ref fileSize, handle);
             if (!result.IsSuccess())
             {
                 Debug.LogError($"Switch ReadFile failed at GetSize step: {result}");
-                File.Close(fileHandle);
+                File.Close(handle);
                 return false;
             }
 
             data = new byte[fileSize];
-            result = File.Read(fileHandle, 0, data, fileSize);
-            File.Close(fileHandle);
+            result = File.Read(handle, 0, data, fileSize);
+            File.Close(handle);
 
-            if (!result.IsSuccess())
+            if (!Check(result, out _))
             {
                 Debug.LogError($"Switch ReadFile failed at Read step: {result}");
                 data = null;
