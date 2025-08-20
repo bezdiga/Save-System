@@ -24,12 +24,6 @@ namespace Sample
                 var platformInitializer = resolver.Resolve<PlatformInitializer>();
                 return platformInitializer.Storage;
             }, Lifetime.Singleton).As<IWriterReader,IDisposable>();
-
-            builder.Register(resolver =>
-            {
-                var platformInitializer = resolver.Resolve<PlatformInitializer>();
-                return platformInitializer.DirectorySystemProvider;
-            }, Lifetime.Singleton).As<IDirectorySystemProvider>();
             
             builder.Register(resolver =>
             {

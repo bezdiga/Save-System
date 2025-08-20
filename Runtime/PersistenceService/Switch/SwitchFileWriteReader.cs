@@ -4,8 +4,10 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using _JoykadeGames.Runtime.SaveSystem.Nitendo;
 using nn.fs;
 using OdinSerializer;
+using PersistenceService.Switch;
 using UnityEngine;
 
 
@@ -18,12 +20,20 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
 
         private bool disposedValue = false;
         private SwitchInitParams _switchInitParams;
+        
+        public IDirectorySystemProvider Directory { get; private set; }
+        public IFileSystemProvider File { get; private set; }
+        
+        
         public SwitchFileWriteReader(SwitchInitParams initParams)
         {
             _switchInitParams = initParams ?? throw new ArgumentNullException(nameof(initParams));
+            File = new SwitchFileSystem(initParams.SerializationAsset.DataPath);
+            Directory = new SwitchDirectoryProvider();
             _serialization = initParams.SerializationAsset;
             MountFileSystem(initParams.UserId);
         }
+        
 
         public void SerializeData(StorableCollection buffer, string path)
         {
@@ -43,82 +53,11 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
                 SerializationUtility.SerializeValue(buffer, writer);
                 saveData = ms.ToArray();
             }
-            //UnityEngine.Switch.Notification.EnterExitRequestHandlingSection();
-            
-            nn.Result result;
-        
-            nn.fs.FileHandle handle = new nn.fs.FileHandle();
-            
-            
-            result = nn.fs.File.Open(ref handle, path, nn.fs.OpenFileMode.Write);
-            
-            if (!result.IsSuccess())
-            {
-                if (nn.fs.FileSystem.ResultPathNotFound.Includes(result))
-                {
-                    result = nn.fs.File.Create(path, saveData.LongLength);
-                    if (!result.IsSuccess())
-                    {
-                        if(FileSystem.ResultTargetLocked.Includes(result))
-                        {
-                            Debug.LogError($"SaveSystem Error: File already exists and is locked: {path}");
-                        }
-                        else if (FileSystem.ResultPathNotFound.Includes(result))
-                        {
-                            Debug.LogError($"SaveSystem Error: Path not found when trying to create file: {path}");
-                        }
-                        else if(FileSystem.ResultUsableSpaceNotEnough.Includes(result))
-                        {
-                            Debug.LogError($"SaveSystem Error: Not enough usable space to create file at: {path}");
-                        }
-                        else Debug.LogError($"File did not exist and creation at: {path} failed: {result}");
-                        return;
-                    }
-                    
-                    result = nn.fs.File.Open(ref handle, path, nn.fs.OpenFileMode.Write);
-                    if (!result.IsSuccess())
-                    {
-                        Debug.LogError($"SaveSystem Error: Failed to open a file we just created: {result}");
-                        return ;
-                    }
-                }
-                else if(nn.fs.FileSystem.ResultUsableSpaceNotEnough.Includes(result))
-                {
-                    // DA, nu există suficient spațiu liber pentru a scrie fișierul.
-                    Debug.LogError($"SaveSystem Error: Not enough usable space to write the file: {result}");
-                    return ;
-                }
-                else
-                {
-                    
-                    Debug.LogError($"SaveSystem Error: Failed to open file for an unexpected reason: {result}");
-                    return ;
-                }
-            }
-            
-            result = nn.fs.File.SetSize(handle, saveData.LongLength);
-            
-            result = nn.fs.File.Write(handle, 0, saveData, saveData.LongLength, nn.fs.WriteOption.Flush);
-            result.abortUnlessSuccess();
-            
-            nn.fs.File.Close(handle);
-            
-        
-            //UnityEngine.Switch.Notification.LeaveExitRequestHandlingSection();
+
+            File.WriteFile(path, saveData);
         }
 
-        public void StartSaveOperation()
-        {
-            Debug.Log("Entering exit request handling section...");
-            UnityEngine.Switch.Notification.EnterExitRequestHandlingSection();
-        }
-        public void EndSaveOperation()
-        {
-            var result = nn.fs.FileSystem.Commit(_serialization.DataPath);
-            result.abortUnlessSuccess();
-            UnityEngine.Switch.Notification.LeaveExitRequestHandlingSection();
-            Debug.Log("Ending exit request handling section...");
-        }
+      
 
         public void TryDeserializeGameStateAsync(string folderName)
         {
@@ -127,7 +66,7 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
             string saveFolderPath = Path.Combine(savesPath, folderName);
 
             // check if directory exists
-            if (!DirectoryUtils.Exists(saveFolderPath))
+            if (!Directory.Exists(saveFolderPath))
             {
                 Debug.LogError("Save folder does not exist: " + saveFolderPath);
                 return;
@@ -151,33 +90,7 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
                 return null;
             }
             // An nn.Result object is used to get the result of NintendoSDK plug-in operations.
-            nn.Result result;
-            
-            nn.fs.FileHandle handle = new nn.fs.FileHandle();
-            
-            result = nn.fs.File.Open(ref handle, path, nn.fs.OpenFileMode.Read);
-            if (!result.IsSuccess())
-            {
-                if (nn.fs.FileSystem.ResultPathNotFound.Includes(result))
-                {
-                    Debug.LogFormat("SaveSystem Error: File not found: {0}", path);
-
-                    return null;
-                }
-                else
-                {
-                    Debug.LogErrorFormat("SaveSystem Error: Unable to open {0}: {1}", path, result.ToString());
-
-                    return null;
-                }
-            }
-            
-            long fileSize = 0;
-            nn.fs.File.GetSize(ref fileSize, handle);
-            
-            byte[] bytes = new byte[fileSize];
-            nn.fs.File.Read(handle, 0, bytes, fileSize);
-            nn.fs.File.Close(handle);
+            File.ReadFile(path, out byte[] bytes);
             
             StorableCollection collection = SerializationUtility.DeserializeValue<StorableCollection>(bytes, DataFormat.Binary);
             return collection;
@@ -193,16 +106,16 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
             
             IList<SavedGameInfo> saveInfos = new List<SavedGameInfo>();
             
-            if (DirectoryUtils.Exists(savesPath))
+            if (Directory.Exists(savesPath))
             {
-                string[] directories = DirectoryUtils.GetDirectories(savesPath);
+                string[] directories = Directory.GetDirectories(savesPath,"");
                 foreach (var directoryPath in directories)
                 {
                     //string fileName = saveInfoPrefix + saveExtension;
                     string saveInfoPath = Path.Combine(_serialization.GetSavesPath(),directoryPath, saveInfoPrefix + saveExtension);
 
                     // check if file exists
-                    if (!FileUtils.Exists(saveInfoPath))
+                    if (!File.Exists(saveInfoPath))
                         continue;
                     
                     var info = LoadFromSaveFile(saveInfoPath);
@@ -242,7 +155,7 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
 
         public Task RemoveAllSaves()
         {
-            Debug.LogError("SaveSystem warning : RemoveAllSaves is not implemented for SwitchFileWriteReader.");
+            nn.fs.Directory.Delete(_serialization.GetSavesPath());
             return Task.CompletedTask;
         }
 

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using _JoykadeGames.Runtime.SaveSystem.Standlone;
 using OdinSerializer;
+using PersistenceService.Standalone;
 using UnityEngine;
 
 namespace _JoykadeGames.Runtime.SaveSystem
@@ -14,8 +15,13 @@ namespace _JoykadeGames.Runtime.SaveSystem
     {
         private SerializationAsset _serialization;
         
+        public IDirectorySystemProvider Directory { get; private set; }
+        public IFileSystemProvider File { get; private set; }
+        
         public FileWriteRead(StandaloneParams @params)
         {
+            File = new StandaloneFileSystemProvider(@params.SerializationAsset.DataPath);
+            Directory = new StandloneDirectoryProvider();
             _serialization = @params.SerializationAsset;
         }
 
@@ -29,7 +35,7 @@ namespace _JoykadeGames.Runtime.SaveSystem
             }
 
             Debug.Log("Loading save file from path: " + path);
-            byte[] bytes = File.ReadAllBytes(path);
+            File.ReadFile(path,out byte[] bytes);
             StorableCollection gamedata = SerializationUtility.DeserializeValue<StorableCollection>(bytes, DataFormat.Binary);
 
             return gamedata;
@@ -37,12 +43,13 @@ namespace _JoykadeGames.Runtime.SaveSystem
         
         public void SerializeData(StorableCollection buffer, string path)
         {
-            Stream stream = File.Open(path, FileMode.Create);
+            Stream stream = System.IO.File.Open(path, FileMode.Create);
             var context = new SerializationContext();
             var writer = new BinaryDataWriter(stream, context);
 
             SerializationUtility.SerializeValue(buffer, writer);
 
+            Debug.LogError("serialized data to path: " + path);
             stream.Close();
         }
         
@@ -143,26 +150,14 @@ namespace _JoykadeGames.Runtime.SaveSystem
                     for (int i = 0; i < directories.Length; i++)
                     {
                         string directoryPath = directories[i];
-                        deleteTasks[i] = Task.Run(() => Directory.Delete(directoryPath, true));
+                        deleteTasks[i] = Task.Run(() => System.IO.Directory.Delete(directoryPath, true));
                     }
                     await Task.WhenAll(deleteTasks);
                 }
             }
         }
-
-        public void StartSaveOperation()
-        {
-            // This method can be used to initialize any resources or state needed for saving.
-            Debug.Log("Starting save operation...");
-        }
-
-        public void EndSaveOperation()
-        {
-            // This method can be used to clean up resources or finalize the save operation.
-            Debug.Log("Ending save operation...");
-        }
-
-
+        
+        
         public void Dispose()
         {
             Debug.Log("Disposing FileWriteRead");

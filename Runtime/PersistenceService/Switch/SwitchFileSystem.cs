@@ -16,17 +16,13 @@ namespace _JoykadeGames.Runtime.SaveSystem.Nitendo
         {
             this.mountName = mountName;
         }
-        private string GetFullPath(string relativePath)
-        {
-            return $"{mountName}:/{relativePath}";
-        }
         
         
         public bool Exists(string path)
         {
             EntryType entryType = 0;
-            string fullPath = GetFullPath(path);
-            Result result = FileSystem.GetEntryType(ref entryType, fullPath);
+            Debug.LogError("Check Exist file at path: " + path );
+            Result result = FileSystem.GetEntryType(ref entryType, path);
             
             
             if (result.IsSuccess())
@@ -47,9 +43,8 @@ namespace _JoykadeGames.Runtime.SaveSystem.Nitendo
 
         public bool WriteFile(string path, byte[] data)
         {
-            string fullPath = GetFullPath(path);
             long size = data.LongLength;
-            Debug.LogError("Trying to write file: " + fullPath + " with size: " + size);
+            Debug.LogError("Trying to write file: " + path + " with size: " + size);
             // Blochează notificările de sistem pe durata operațiunilor I/O critice
             UnityEngine.Switch.Notification.EnterExitRequestHandlingSection();
 
@@ -57,17 +52,17 @@ namespace _JoykadeGames.Runtime.SaveSystem.Nitendo
             {
                 nn.Result result;
                 
-                result = nn.fs.File.Open(ref writer.handle, fullPath, nn.fs.OpenFileMode.Write);
+                result = nn.fs.File.Open(ref writer.handle, path, nn.fs.OpenFileMode.Write);
                 
                 if (!Check(result, out FileSystemErrorType error))
                 {
                     if (error == FileSystemErrorType.PathNotFound)
                     {
-                        result = nn.fs.File.Create(fullPath, data.LongLength);
-                        Debug.LogError("Create new file: " + fullPath + " with size: " + data.LongLength);
+                        result = nn.fs.File.Create(path, data.LongLength);
+                        Debug.LogError("Create new file: " + path + " with size: " + data.LongLength);
                         if (!Check(result, out _)) return false;
                     }
-                    result = nn.fs.File.Open(ref writer.handle, fullPath, nn.fs.OpenFileMode.Write);
+                    result = nn.fs.File.Open(ref writer.handle, path, nn.fs.OpenFileMode.Write);
                     if (!Check(result, out _)) return false;
                 }
                 
@@ -83,13 +78,12 @@ namespace _JoykadeGames.Runtime.SaveSystem.Nitendo
         public bool ReadFile(string path, out byte[] data)
         {
             data = null;
-            string fullPath = GetFullPath(path);
 
-            Debug.LogError("Trying to read file: " + fullPath);
+            Debug.LogError("Trying to read file: " + path);
             if (!Exists(path)) return false;
 
             nn.fs.FileHandle handle = new nn.fs.FileHandle();
-            Result result = File.Open(ref handle, fullPath, OpenFileMode.Read);
+            Result result = File.Open(ref handle, path, OpenFileMode.Read);
             
             if (!Check(result,out _)) return false;
             

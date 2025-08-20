@@ -22,7 +22,7 @@ namespace _JoykadeGames.Runtime.SaveSystem
         internal static StorableCollection _worldStateBuffer;
         //protected static IWriterReader WriteRead => Instance._writeRead;
         private IWriterReader _writeRead;
-        private IDirectorySystemProvider Directory;
+        //private IDirectorySystemProvider DirectoryTT;
         private string currentScene;
         public static string LoadSceneName;
         public static string LoadFolderName;
@@ -33,11 +33,9 @@ namespace _JoykadeGames.Runtime.SaveSystem
         public static string LMS => _serializationAsset.LevelManagerScene;
         
         [Inject]
-        public void Construct(IWriterReader writeRead,IDirectorySystemProvider directorySystemProvider)
+        public void Construct(IWriterReader writeRead)
         {
             _writeRead = writeRead;
-            Directory = directorySystemProvider;
-            Debug.LogError("Successfully injected SaveGameManager with IWriterReader");
         }
         private void Awake()
         {
@@ -51,8 +49,8 @@ namespace _JoykadeGames.Runtime.SaveSystem
             get
             {
                 string savesPath = _serializationAsset.GetSavesPath();
-                if (!Directory.Exists(savesPath))
-                    Directory.CreateDirectory(savesPath);
+                if (!_writeRead.Directory.Exists(savesPath))
+                    _writeRead.Directory.CreateDirectory(savesPath);
 
                 return savesPath;
             }
@@ -173,8 +171,8 @@ namespace _JoykadeGames.Runtime.SaveSystem
         {
             GetSavedFolder(out string saveFolderName);
             string saveFolderPath = Path.Combine(SavedGamePath, saveFolderName);
-            if (!Directory.Exists(saveFolderPath))
-                Directory.CreateDirectory(saveFolderPath);
+            if (!_writeRead.Directory.Exists(saveFolderPath))
+                _writeRead.Directory.CreateDirectory(saveFolderPath);
             
             string saveId = UniqueID.GetUniqueGuid();
             StorableCollection saveInfoData = new()
@@ -201,16 +199,13 @@ namespace _JoykadeGames.Runtime.SaveSystem
 
             saveInfo["data"] = saveDataFileName;
             
-            using (new SaveOperationContext(_writeRead))
-            {
-                // serialize save info to file
-                string saveInfoPath = Path.Combine(folderPath, saveInfoFileName);
-                _writeRead.SerializeData(saveInfo, saveInfoPath);
+            // serialize save info to file
+            string saveInfoPath = Path.Combine(folderPath, saveInfoFileName);
+            _writeRead.SerializeData(saveInfo, saveInfoPath);
 
-                // serialize save data to file
-                string saveDataPath = Path.Combine(folderPath, saveDataFileName);
-                _writeRead.SerializeData(saveBuffer, saveDataPath);
-            }
+            // serialize save data to file
+            string saveDataPath = Path.Combine(folderPath, saveDataFileName);
+            _writeRead.SerializeData(saveBuffer, saveDataPath);
 
         }
         
@@ -222,7 +217,7 @@ namespace _JoykadeGames.Runtime.SaveSystem
 
             if (!_serializationAsset.SingleSave)
             {
-                string[] directories = Directory.GetDirectories(SavedGamePath, $"{saveFolderName}*");
+                string[] directories = _writeRead.Directory.GetDirectories(SavedGamePath, $"{saveFolderName}*");
                 saveFolderName += directories.Length.ToString("D3");//saveFolderName += (directories.Length - 1).ToString("D3");
             }
             // if single save and use of scene names is enabled, the scene name is used as the save name

@@ -36,4 +36,16 @@ public class SerializationAsset : ScriptableObject
         return new StandaloneInitializer().GetSavesPath();
 #endif
     }
+
+    public string GetConfigPath()
+    {
+#if UNITY_SWITCH && !UNITY_EDITOR
+            return string.Format("{0}:/{1}", DataPath, ConfigPath);
+#elif UNITY_PS4 && !UNITY_EDITOR
+            throw new Exception("PlayStation 4 platform is not supported in this implementation.");
+#elif UNITY_STANDALONE || UNITY_EDITOR
+        return Path.Combine(Application.persistentDataPath, DataPath, ConfigPath).Replace('\\', '/');
+        #endif
+
+    }
 }

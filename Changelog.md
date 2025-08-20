@@ -8,3 +8,6 @@
 - Fixarea problemei de citire din fisier
 - Prevenirea erorilor care pot aparea la crearea de fiseire multiple
 - Stabilizarea codului
+
+# Version 1.1.12
+- Add SwitchFileSystem - folsoita pentru citire/scriere fisierelor pe consiola Switch

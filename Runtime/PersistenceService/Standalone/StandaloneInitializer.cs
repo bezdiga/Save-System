@@ -20,8 +20,6 @@ namespace _JoykadeGames.Runtime.SaveSystem.Standlone
         {
             var parameters = new StandaloneParams(SerializationUtillity.SerializationAsset);
             Storage = new FileWriteRead(parameters);
-            DirectorySystemProvider = new StandloneDirectoryProvider();
-            FileSystemProvider = new StandaloneFileSystemProvider(SerializationUtillity.SerializationAsset.DataPath);
             UnityEngine.Debug.Log("Storage for Standalone initialized.");
         }
     }

@@ -37,8 +37,6 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
             var userId = (CurrentUser as SwitchUserProfile)?.UserId; // Presupunând că ai o clasă SwitchUserProfile
             var parameters = new SwitchInitParams(userId,SerializationUtillity.SerializationAsset);
             Storage = new SwitchFileWriteReader(parameters);
-            DirectorySystemProvider = new SwitchDirectoryProvider();
-            FileSystemProvider = new SwitchFileSystem(SerializationUtillity.SerializationAsset.DataPath);
             UnityEngine.Debug.Log("Storage for Switch initialized.");
         }
         

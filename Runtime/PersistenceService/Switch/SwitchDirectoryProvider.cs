@@ -7,6 +7,7 @@ namespace PersistenceService.Switch
 {
     public class SwitchDirectoryProvider : IDirectorySystemProvider
     {
+        
         public void CreateDirectory(string path)
         {
             nn.fs.DirectoryHandle handle = new nn.fs.DirectoryHandle();
@@ -33,6 +34,7 @@ namespace PersistenceService.Switch
             nn.fs.EntryType entryType = 0;
             string fullPath = path;
             
+            Debug.LogError("Checking if path exists: " + fullPath);
             nn.Result result = nn.fs.FileSystem.GetEntryType(ref entryType, fullPath);
             
             if (result.IsSuccess())
