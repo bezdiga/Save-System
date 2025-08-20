@@ -7,6 +7,7 @@ namespace _JoykadeGames.Runtime.SaveSystem
     {
         public IWriterReader Storage { get; protected set; }
         public IDirectorySystemProvider DirectorySystemProvider { get; protected set; }
+        public IFileSystemProvider FileSystemProvider { get; protected set; }
         public IUserProfile CurrentUser { get; protected set; }
         //public ITrophyService TrophyService { get; protected set; }
         

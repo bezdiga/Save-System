@@ -1,4 +1,5 @@
-﻿using PersistenceService.Switch;
+﻿using _JoykadeGames.Runtime.SaveSystem.Nitendo;
+using PersistenceService.Switch;
 using UnityEngine;
 
 namespace _JoykadeGames.Runtime.SaveSystem.Switch
@@ -37,6 +38,7 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
             var parameters = new SwitchInitParams(userId,SerializationUtillity.SerializationAsset);
             Storage = new SwitchFileWriteReader(parameters);
             DirectorySystemProvider = new SwitchDirectoryProvider();
+            FileSystemProvider = new SwitchFileSystem();
             UnityEngine.Debug.Log("Storage for Switch initialized.");
         }
         
