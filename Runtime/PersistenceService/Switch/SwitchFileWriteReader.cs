@@ -22,6 +22,7 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
         {
             _switchInitParams = initParams ?? throw new ArgumentNullException(nameof(initParams));
             _serialization = initParams.SerializationAsset;
+            MountFileSystem(initParams.UserId);
         }
 
         public void SerializeData(StorableCollection buffer, string path)
