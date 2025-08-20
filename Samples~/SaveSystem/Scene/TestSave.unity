@@ -301,7 +301,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 428754435}
-  - component: {fileID: 428754434}
+  - component: {fileID: 428754436}
   m_Layer: 0
   m_Name: VContainer
   m_TagString: Untagged
@@ -309,23 +309,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &428754434
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 428754433}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ea8c61518aff40b1848495e453057202, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  parentReference:
-    TypeName: Sample.AppLifetimeScope
-  autoRun: 1
-  autoInjectGameObjects: []
-  saveGameManager: {fileID: 2076297668}
 --- !u!4 &428754435
 Transform:
   m_ObjectHideFlags: 0
@@ -341,6 +324,24 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &428754436
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 428754433}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c16bb0f67396a042a26c28de6bd2b56, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  parentReference:
+    TypeName: Sample.AppLifetimeScope
+  autoRun: 1
+  autoInjectGameObjects: []
+  saveGameManager: {fileID: 2076297668}
+  experienceManager: {fileID: 1412506462}
 --- !u!1 &455032925
 GameObject:
   m_ObjectHideFlags: 0
@@ -999,7 +1000,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1412506457}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 73225f5148e6d0e40aef675c4739b808, type: 3}
+  m_Script: {fileID: 11500000, guid: c55816c74562b4f4abf49171b49afc39, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   level: 0
@@ -1185,7 +1186,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   worldSaveables:
-  - SceneId: ExperienceManager-75f7e8df-7dbb-4fef-92e4-7a8fc34f656d
+  - SceneId: ExperienceManager-f2217664-0bfa-43ec-ba5a-e0d8e8fd230b
     Instance: {fileID: 1412506462}
   runtimeSaveables: []
 --- !u!1 &2087453054

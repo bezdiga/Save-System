@@ -1,13 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
+using _JoykadeGames.Runtime.SaveSystem;
 using UnityEngine;
 
-namespace _JoykadeGames.Runtime.SaveSystem.Switch
+namespace PersistenceService.Switch
 {
-    public static class DirectoryUtils
+    public class SwitchDirectoryProvider : IDirectorySystemProvider
     {
-        
-        public static bool Exists(string path)
+        public void CreateDirectory(string path)
+        {
+            nn.fs.DirectoryHandle handle = new nn.fs.DirectoryHandle();
+            nn.Result result = nn.fs.Directory.Create(path);
+            
+            if (!result.IsSuccess())
+            {
+                Debug.LogError($"Failed to create directory {path}: {result}");
+            }
+            else
+            {
+                Debug.Log($"Directory created successfully: {path}");
+                Debug.Log($"Exists after creation: {Exists(path)}");
+            }
+        }
+
+        public void Delete(string path)
+        {
+            Debug.LogWarning("Delete method is not implemented for SwitchDirectoryProvider. Please implement it if needed.");
+        }
+
+        public bool Exists(string path)
         {
             nn.fs.EntryType entryType = 0;
             string fullPath = path;
@@ -29,7 +50,8 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
                 return false;
             }
         }
-        public static string[] GetDirectories(string path)
+
+        public string[] GetDirectories(string path, string searchPattern)
         {
             var directoryNames = new List<string>();
             string fullPath = path;
@@ -77,6 +99,7 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
                         if (entryBuffer[i].entryType == nn.fs.EntryType.Directory)
                         {
                             directoryNames.Add(entryBuffer[i].name);
+                            Debug.LogError("Added directory: " + entryBuffer[i].name);
                         }
                     }
                 }
@@ -86,31 +109,6 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
                 nn.fs.Directory.Close(handle);
             }
             return directoryNames.ToArray();
-        }
-    }
-    
-    public static class FileUtils
-    {
-        public static bool Exists(string path)
-        {
-            nn.fs.EntryType entryType = 0;
-            string fullPath = path;
-            
-            nn.Result result = nn.fs.FileSystem.GetEntryType(ref entryType, fullPath);
-            
-            if (result.IsSuccess())
-            {
-                return entryType == nn.fs.EntryType.File;
-            }
-            else if (nn.fs.FileSystem.ResultPathNotFound.Includes(result))
-            {
-                return false;
-            }
-            else
-            {
-                Debug.LogError($"An unexpected error occurred while checking entry type for {fullPath}: {result}");
-                return false;
-            }
         }
     }
 }

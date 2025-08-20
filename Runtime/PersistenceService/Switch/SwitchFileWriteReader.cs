@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using nn.fs;
 using OdinSerializer;
 using UnityEngine;
-using File = nn.fs.File;
+
 
 namespace _JoykadeGames.Runtime.SaveSystem.Switch
 {
@@ -14,11 +15,13 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
     {
         private SerializationAsset _serialization;
         private bool isMounted = false;
-        
+
+        private bool disposedValue = false;
+        private SwitchInitParams _switchInitParams;
         public SwitchFileWriteReader(SwitchInitParams initParams)
         {
+            _switchInitParams = initParams ?? throw new ArgumentNullException(nameof(initParams));
             _serialization = initParams.SerializationAsset;
-            MountFileSystem(initParams.UserId);
         }
 
         public void SerializeData(StorableCollection buffer, string path)
@@ -29,6 +32,7 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
                 return;
             }
             
+            Debug.LogError("SaveSystem: Serializing data to path: " + path);
             byte[] saveData;
             using (MemoryStream ms = new MemoryStream())
             {
@@ -38,7 +42,7 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
                 SerializationUtility.SerializeValue(buffer, writer);
                 saveData = ms.ToArray();
             }
-            UnityEngine.Switch.Notification.EnterExitRequestHandlingSection();
+            //UnityEngine.Switch.Notification.EnterExitRequestHandlingSection();
             
             nn.Result result;
         
@@ -51,11 +55,22 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
             {
                 if (nn.fs.FileSystem.ResultPathNotFound.Includes(result))
                 {
-                    // DA, fișierul nu există. Acesta este un caz normal. Îl creăm.
-                    result = nn.fs.File.Create(path, _serialization.DataSize);
+                    result = nn.fs.File.Create(path, saveData.LongLength);
                     if (!result.IsSuccess())
                     {
-                        Debug.LogError($"File did not exist and creation failed: {result}");
+                        if(FileSystem.ResultTargetLocked.Includes(result))
+                        {
+                            Debug.LogError($"SaveSystem Error: File already exists and is locked: {path}");
+                        }
+                        else if (FileSystem.ResultPathNotFound.Includes(result))
+                        {
+                            Debug.LogError($"SaveSystem Error: Path not found when trying to create file: {path}");
+                        }
+                        else if(FileSystem.ResultUsableSpaceNotEnough.Includes(result))
+                        {
+                            Debug.LogError($"SaveSystem Error: Not enough usable space to create file at: {path}");
+                        }
+                        else Debug.LogError($"File did not exist and creation at: {path} failed: {result}");
                         return;
                     }
                     
@@ -80,19 +95,53 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
                 }
             }
             
-            result = nn.fs.File.SetSize(handle, _serialization.DataSize);
+            result = nn.fs.File.SetSize(handle, saveData.LongLength);
             
-            result = nn.fs.File.Write(handle, 0, saveData, _serialization.DataSize, nn.fs.WriteOption.Flush);
+            result = nn.fs.File.Write(handle, 0, saveData, saveData.LongLength, nn.fs.WriteOption.Flush);
             result.abortUnlessSuccess();
             
             nn.fs.File.Close(handle);
+            
         
-            result = nn.fs.FileSystem.Commit(_serialization.DataPath);
-            result.abortUnlessSuccess();
-        
-            UnityEngine.Switch.Notification.LeaveExitRequestHandlingSection();
+            //UnityEngine.Switch.Notification.LeaveExitRequestHandlingSection();
         }
 
+        public void StartSaveOperation()
+        {
+            Debug.Log("Entering exit request handling section...");
+            UnityEngine.Switch.Notification.EnterExitRequestHandlingSection();
+        }
+        public void EndSaveOperation()
+        {
+            var result = nn.fs.FileSystem.Commit(_serialization.DataPath);
+            result.abortUnlessSuccess();
+            UnityEngine.Switch.Notification.LeaveExitRequestHandlingSection();
+            Debug.Log("Ending exit request handling section...");
+        }
+
+        public void TryDeserializeGameStateAsync(string folderName)
+        {
+            // get saves path
+            string savesPath = SaveGameManager._serializationAsset.GetSavesPath();
+            string saveFolderPath = Path.Combine(savesPath, folderName);
+
+            // check if directory exists
+            if (!DirectoryUtils.Exists(saveFolderPath))
+            {
+                Debug.LogError("Save folder does not exist: " + saveFolderPath);
+                return;
+            }
+
+            // deserialize saved game info
+            string filePath = Path.Combine(saveFolderPath, SaveGameManager._serializationAsset.SaveDataName + SaveGameManager._serializationAsset.SaveExtension);
+            StorableCollection worldData = LoadFromSaveFile(filePath);
+            if (worldData != null)
+            {
+                if (worldData.ContainsKey("worldState"))
+                    SaveGameManager._worldStateBuffer = (worldData["worldState"] as StorableCollection);
+            }
+        }
+        
         public StorableCollection LoadFromSaveFile(string path)
         {
             if (!isMounted)
@@ -100,7 +149,6 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
                 Debug.LogError("SaveSystem Error: File system is not mounted. Cannot load data.");
                 return null;
             }
-            
             // An nn.Result object is used to get the result of NintendoSDK plug-in operations.
             nn.Result result;
             
@@ -136,25 +184,26 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
 
         public async Task<SavedGameInfo[]> ReadAllSaves()
         {
+            
             string savesPath = _serialization.GetSavesPath();
-            string saveFolderPrefix = _serialization.SaveFolderPrefix;
+            //string saveFolderPrefix = _serialization.SaveFolderPrefix;
             string saveInfoPrefix = _serialization.SaveInfoName;
             string saveExtension = _serialization.SaveExtension;
+            
             IList<SavedGameInfo> saveInfos = new List<SavedGameInfo>();
-
+            
             if (DirectoryUtils.Exists(savesPath))
             {
                 string[] directories = DirectoryUtils.GetDirectories(savesPath);
                 foreach (var directoryPath in directories)
                 {
-                    string fileName = saveInfoPrefix + saveExtension;
-                    string saveInfoPath = Path.Combine(directoryPath, saveInfoPrefix + saveExtension);
+                    //string fileName = saveInfoPrefix + saveExtension;
+                    string saveInfoPath = Path.Combine(_serialization.GetSavesPath(),directoryPath, saveInfoPrefix + saveExtension);
 
                     // check if file exists
                     if (!FileUtils.Exists(saveInfoPath))
                         continue;
-
-                    Debug.LogError("Current save info path: " + saveInfoPath);
+                    
                     var info = LoadFromSaveFile(saveInfoPath);
 
                     var timeString = info.GetT<string>("dateTime");
@@ -183,6 +232,7 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
                     });
                     
                 }
+                return saveInfos.OrderByDescending(x => x.TimeSaved).ToArray();
             }
             
             return new SavedGameInfo[0];
@@ -198,6 +248,7 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
         private void MountFileSystem(nn.account.Uid userId)
         {
             if (isMounted) return;
+            Debug.LogError("Finish mounting file system, now loading from path: " + _serialization.DataPath);
             nn.Result result;
             result = nn.fs.SaveData.Mount(_serialization.DataPath, userId);
             isMounted = true;
@@ -215,18 +266,45 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
                 // The specified mount name is already in use.
                 Debug.LogErrorFormat("The mount name '{0}' is already in use: {1}", _serialization.DataPath, result.ToString());
             }
-
+            
             // Abort if any of the initialization steps failed.
             result.abortUnlessSuccess();
         }
+
+
+        #region Disposable Implementation
         
-        ~SwitchFileWriteReader()
+        protected virtual void Dispose(bool disposing)
         {
-            if (isMounted)
+            if (!disposedValue)
             {
-                UnmountSave();
+                if (disposing)
+                {
+                    // Eliberează aici resursele MANAGED (alte obiecte .NET care sunt IDisposable)
+                }
+
+                // Eliberează aici resursele UNMANAGED (fișiere, handle-uri, etc.)
+                if (isMounted)
+                {
+                    UnmountSave();
+                }
+
+                disposedValue = true;
             }
         }
+
+        ~SwitchFileWriteReader()
+        {
+            Dispose(disposing: false);
+        }
+        
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
+        
         private void UnmountSave()
         {
             Debug.LogError("Unmounting save data at path: " + _serialization.DataPath);

@@ -19,7 +19,8 @@ namespace _JoykadeGames.Runtime.SaveSystem.Standlone
         protected override void InitializeSave()
         {
             var parameters = new StandaloneParams(SerializationUtillity.SerializationAsset);
-            Storage = WriterReaderFactory.GetWriter(parameters);
+            Storage = new FileWriteRead(parameters);
+            DirectorySystemProvider = new StandloneDirectoryProvider();
             UnityEngine.Debug.Log("Storage for Standalone initialized.");
         }
     }

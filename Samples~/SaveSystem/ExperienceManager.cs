@@ -3,6 +3,8 @@ using _JoykadeGames.Runtime.SaveSystem;
 
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
+using VContainer;
 
 public class ExperienceManager : MonoBehaviour,ISaveable
 {
@@ -11,6 +13,7 @@ public class ExperienceManager : MonoBehaviour,ISaveable
     private GUIStyle customStyle;
     private GUIStyle buttonStyle;
 
+    private IWriterReader _writerReader;
     private void OnGUI()
     {
         if (customStyle == null)
@@ -37,8 +40,22 @@ public class ExperienceManager : MonoBehaviour,ISaveable
         {
             SaveGameManager.SaveGame();
         }
+        
+        if(GUI.Button(new Rect(x + 510, y +150, 250, 80), "Menu",buttonStyle))
+        {
+            LoadGame();
+        }
+        if(GUI.Button(new Rect(x + 765, y +150, 250, 80), "Unmount",buttonStyle))
+        {
+            Unmount();
+        }
     }
 
+    [Inject]
+    public void Construct(IWriterReader writeRead)
+    {
+        _writerReader = writeRead;
+    }
     private void Update()
     {
         if (Gamepad.current != null) 
@@ -66,6 +83,15 @@ public class ExperienceManager : MonoBehaviour,ISaveable
         }
     }
 
+    public void LoadGame()
+    {
+        SceneManager.LoadScene("MainMenu");
+    }
+
+    public void Unmount()
+    {
+        _writerReader.Dispose();
+    }
     public void OnLoad(StorableCollection members)
     {
         level = members.GetT<int>(nameof(level));

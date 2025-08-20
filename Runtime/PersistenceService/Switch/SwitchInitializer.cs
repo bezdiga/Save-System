@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using PersistenceService.Switch;
+using UnityEngine;
 
 namespace _JoykadeGames.Runtime.SaveSystem.Switch
 {
@@ -34,7 +35,8 @@ namespace _JoykadeGames.Runtime.SaveSystem.Switch
         {
             var userId = (CurrentUser as SwitchUserProfile)?.UserId; // Presupunând că ai o clasă SwitchUserProfile
             var parameters = new SwitchInitParams(userId,SerializationUtillity.SerializationAsset);
-            Storage = WriterReaderFactory.GetWriter(parameters);
+            Storage = new SwitchFileWriteReader(parameters);
+            DirectorySystemProvider = new SwitchDirectoryProvider();
             UnityEngine.Debug.Log("Storage for Switch initialized.");
         }
         

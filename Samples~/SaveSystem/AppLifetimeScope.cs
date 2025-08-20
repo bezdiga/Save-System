@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using _JoykadeGames.Runtime.SaveSystem;
 using UnityEngine.SceneManagement;
 using VContainer;
@@ -22,8 +23,13 @@ namespace Sample
             {
                 var platformInitializer = resolver.Resolve<PlatformInitializer>();
                 return platformInitializer.Storage;
-            }, Lifetime.Singleton).As<IWriterReader>();
+            }, Lifetime.Singleton).As<IWriterReader,IDisposable>();
 
+            builder.Register(resolver =>
+            {
+                var platformInitializer = resolver.Resolve<PlatformInitializer>();
+                return platformInitializer.DirectorySystemProvider;
+            }, Lifetime.Singleton).As<IDirectorySystemProvider>();
             
             builder.Register(resolver =>
             {

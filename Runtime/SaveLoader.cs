@@ -27,17 +27,14 @@ namespace _JoykadeGames.Runtime.SaveSystem
         public UnityEvent OnSavesEmpty;
 
         [Inject]
-        public void Construct(IWriterReader wr,IUserProfile userProfile)
+        public void Construct(IWriterReader wr)
         {
-            _writerReader = wr;
-            Debug.LogError("Injection Successful");
-            Debug.LogError("Reader: " + wr.GetType().Name);
-            if(userProfile == null)
+            if(wr == null)
             {
-                Debug.LogError("UserProfile is null");
+                Debug.LogError("Writer is null");
                 return;
             }
-            Debug.LogError("Profile: " + userProfile.GetType().Name);
+            _writerReader = wr;
         }
         private async void Start()
         {
@@ -91,8 +88,13 @@ namespace _JoykadeGames.Runtime.SaveSystem
                 Debug.LogError($"{saved.Foldername} - time: {saved.TimeSaved}");
             }
             // set last saved game
-            if(savedGames.Length > 0)
+            if (savedGames.Length > 0)
+            {
                 lastSave = savedGames[0];
+                ContinueButton.gameObject.SetActive(lastSave.HasValue);
+            }
+
+            Debug.LogError("Last save: " + (lastSave.HasValue ? lastSave.Value.Foldername : "null"));
             
             if(savedGames.Length > 0)
             {

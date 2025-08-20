@@ -22,6 +22,7 @@ namespace _JoykadeGames.Runtime.SaveSystem
         internal static StorableCollection _worldStateBuffer;
         //protected static IWriterReader WriteRead => Instance._writeRead;
         private IWriterReader _writeRead;
+        private IDirectorySystemProvider Directory;
         private string currentScene;
         public static string LoadSceneName;
         public static string LoadFolderName;
@@ -32,9 +33,10 @@ namespace _JoykadeGames.Runtime.SaveSystem
         public static string LMS => _serializationAsset.LevelManagerScene;
         
         [Inject]
-        public void Construct(IWriterReader writeRead)
+        public void Construct(IWriterReader writeRead,IDirectorySystemProvider directorySystemProvider)
         {
             _writeRead = writeRead;
+            Directory = directorySystemProvider;
             Debug.LogError("Successfully injected SaveGameManager with IWriterReader");
         }
         private void Awake()
@@ -199,13 +201,17 @@ namespace _JoykadeGames.Runtime.SaveSystem
 
             saveInfo["data"] = saveDataFileName;
             
-            // serialize save info to file
-            string saveInfoPath = Path.Combine(folderPath, saveInfoFileName);
-            _writeRead.SerializeData(saveInfo, saveInfoPath);
+            using (new SaveOperationContext(_writeRead))
+            {
+                // serialize save info to file
+                string saveInfoPath = Path.Combine(folderPath, saveInfoFileName);
+                _writeRead.SerializeData(saveInfo, saveInfoPath);
 
-            // serialize save data to file
-            string saveDataPath = Path.Combine(folderPath, saveDataFileName);
-            _writeRead.SerializeData(saveBuffer, saveDataPath);
+                // serialize save data to file
+                string saveDataPath = Path.Combine(folderPath, saveDataFileName);
+                _writeRead.SerializeData(saveBuffer, saveDataPath);
+            }
+
         }
         
         private void GetSavedFolder(out string saveFolderName)

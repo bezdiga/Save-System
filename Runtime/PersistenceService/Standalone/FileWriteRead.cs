@@ -45,6 +45,29 @@ namespace _JoykadeGames.Runtime.SaveSystem
 
             stream.Close();
         }
+        
+        public void TryDeserializeGameStateAsync(string folderName)
+        {
+            // get saves path
+            string savesPath = SaveGameManager._serializationAsset.GetSavesPath();
+            string saveFolderPath = Path.Combine(savesPath, folderName);
+
+            // check if directory exists
+            if (!Directory.Exists(saveFolderPath))
+            {
+                Debug.LogError("Save folder does not exist: " + saveFolderPath);
+                return;
+            }
+
+            // deserialize saved game info
+            string filePath = Path.Combine(saveFolderPath, SaveGameManager._serializationAsset.SaveDataName + SaveGameManager._serializationAsset.SaveExtension);
+            StorableCollection worldData = LoadFromSaveFile(filePath);
+            if (worldData != null)
+            {
+                if (worldData.ContainsKey("worldState"))
+                    SaveGameManager._worldStateBuffer = (worldData["worldState"] as StorableCollection);
+            }
+        }
 
         public async Task<SavedGameInfo[]> ReadAllSaves()
         {
@@ -125,6 +148,24 @@ namespace _JoykadeGames.Runtime.SaveSystem
                     await Task.WhenAll(deleteTasks);
                 }
             }
+        }
+
+        public void StartSaveOperation()
+        {
+            // This method can be used to initialize any resources or state needed for saving.
+            Debug.Log("Starting save operation...");
+        }
+
+        public void EndSaveOperation()
+        {
+            // This method can be used to clean up resources or finalize the save operation.
+            Debug.Log("Ending save operation...");
+        }
+
+
+        public void Dispose()
+        {
+            Debug.Log("Disposing FileWriteRead");
         }
         
     }
