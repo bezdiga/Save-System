@@ -11,7 +11,6 @@ public class OdinAotSupport
     [Preserve]
     private static void AotStubs()
     {
-        var weakDict = new WeakDictionaryFormatter(typeof(string));
         Assembly assembly = typeof(WeakDictionaryFormatter).Assembly;
         var types = assembly.GetTypes()
             .Where(t => t != null
@@ -27,7 +26,7 @@ public class OdinAotSupport
         
     }
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Init()
     {
         AotStubs();
