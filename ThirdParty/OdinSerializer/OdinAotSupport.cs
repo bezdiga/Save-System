@@ -11,6 +11,7 @@ public class OdinAotSupport
     [Preserve]
     private static void AotStubs()
     {
+        var weakDict = new WeakDictionaryFormatter(typeof(string));
         Assembly assembly = typeof(WeakDictionaryFormatter).Assembly;
         var types = assembly.GetTypes()
             .Where(t => t != null
@@ -21,7 +22,7 @@ public class OdinAotSupport
         for (int i = 0; i < types.Count; i++)
         {
             _ = types[i];
-            //Debug.Log("Registering AOT stub for formatter: " + types[i].FullName);
+            Debug.Log("Registering AOT stub for formatter: " + types[i].FullName);
         }
         
     }
