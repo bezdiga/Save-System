@@ -1,4 +1,4 @@
-﻿using System.IO;
+﻿
 using nn;
 using nn.fs;
 using UnityEngine;
@@ -44,10 +44,7 @@ namespace _JoykadeGames.Runtime.SaveSystem.Nitendo
         public bool WriteFile(string path, byte[] data)
         {
             long size = data.LongLength;
-            Debug.LogError("Trying to write file: " + path + " with size: " + size);
-            // Blochează notificările de sistem pe durata operațiunilor I/O critice
-            UnityEngine.Switch.Notification.EnterExitRequestHandlingSection();
-
+            Debug.Log("Trying to write file: " + path + " with size: " + size);
             using (var writer = new WriteContext(mountName))
             {
                 nn.Result result;
